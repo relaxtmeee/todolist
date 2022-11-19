@@ -1,0 +1,33 @@
+.mod 
+{
+    position: fixed;
+    top: 0;
+    left: 0;
+    background: rgba($color: #000000, $alpha: .5);
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1090;
+}
+form
+{
+    width: 800px;
+    border: 3px solid #f7f7f7;
+    border-radius: 10px;
+    padding: 20px ;
+    background: white;
+}
+button
+{
+    margin-right: 15px !important
+}
+.separator
+{
+    height: 2px;
+    width: 80%;
+    background: black;
+    margin: 20px auto;
+   
+}
