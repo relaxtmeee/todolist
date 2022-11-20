@@ -1,6 +1,5 @@
-import Form from 'react-bootstrap/Form';
-import InputGroup from 'react-bootstrap/InputGroup';
-import Button from 'react-bootstrap/Button';
+import './task.scss';
+
 import { doc, deleteDoc } from "firebase/firestore";
 import { db, storage } from '../../services/database';
 import { ref, getDownloadURL, deleteObject} from "firebase/storage";
@@ -80,10 +79,9 @@ const Task = (props) => {
             'boxShadow': '0 0 15px red'
         }
     }
-
     return (
         <>  
-            <div className="separator">
+            {/* <div className="separator">
             
             </div>
             <InputGroup id={id} className="mb-3">
@@ -96,8 +94,8 @@ const Task = (props) => {
                     <InputGroup.Checkbox defaultChecked={checked} onClick={(event) => setCheckbox(event, id, task)} aria-label="Checkbox for following text input" />
                     <Button variant="secondary">{new Date(date).toLocaleDateString()}</Button>
                     <Form.Control aria-label="Text input with checkbox" defaultValue={`${description}`}/>
-                    <Button onClick={redTask} variant="secondary">Редактировать</Button>{' '}
-                    <Button onClick={delTask} variant="danger">Удалить</Button>{' '}
+                    <Button onClick={redTask} variant="secondary">Редактировать</Button>
+                    <Button onClick={delTask} variant="danger">Удалить</Button>
                 </InputGroup>
                 {file ? 
                     <Form.Group className="mb-3">
@@ -109,7 +107,45 @@ const Task = (props) => {
                     : null
                 }
               
-            </InputGroup>
+            </InputGroup> */}
+            <article id={id} style={style}>
+                <h2>
+                    {header}
+                </h2>
+                <div className="article-content" >
+                    <div className="article-check">
+                        <label className="article-checkbox" onClick={(event) => setCheckbox(event, id, task, checked)}>
+                            <input type="checkbox" defaultChecked={checked}/>
+                            <div className="article-checkbox__fake">
+                            </div>
+                        </label>
+                        <time dateTime={new Date(date).toLocaleDateString()}>
+                            {new Date(date).toLocaleDateString()}
+                        </time>
+                    </div>
+                   
+                    <div className="article-description">
+                        {description}
+                    </div>
+                    <div className="article-buttons">
+                        <button className="article-buttons__edit" onClick={redTask}>
+                            Редактировать
+                        </button>
+                        <button className="article-buttons__delete" onClick={delTask}>
+                            Удалить
+                        </button>
+                    </div>
+                </div>
+                {file ? 
+                    <div className="article-file">
+                        <div className="article-file__name">
+                            Добавленный файл:
+                        </div>
+                        <a className={'article-file__link ' + id} href="" download>{file}</a>
+                    </div>
+                    : null
+                }
+            </article>
         </>
         
     );

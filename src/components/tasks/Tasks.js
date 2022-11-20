@@ -21,9 +21,11 @@ const Tasks = () => {
         setLoading(true);
         async function getData () {
             const querySnapshot = await getDocs(collection(db, "tasks"));
+            let arr = [];
             querySnapshot.forEach((doc) => {
-                setTask(task => [...task, {id: doc.id,header: doc.data().header, description: doc.data().description, date: doc.data().date, file: doc.data().file, checked: doc.data().checked}])
+                arr.push({id: doc.id,header: doc.data().header, description: doc.data().description, date: doc.data().date, file: doc.data().file, checked: doc.data().checked})
             });
+            setTask(task => arr)
             setLoading(false);
         }
         getData();
@@ -35,19 +37,23 @@ const Tasks = () => {
      * @param {*} id id текущего таска для обновления состояния выполнения таска в бд 
      * @param {*} task Массив тасков для обновления состояния
      */
-    const setCheckbox = async (event, id, task) => {
+    const setCheckbox = async (event, id, task, checked) => {
         setLoading(true)
-        const checked = event.target.checked;
+
+        const check = !checked;
+
         const washingtonRef = doc(db, "tasks", id);
 
         await updateDoc(washingtonRef, {
-            checked: checked
+            checked: check
+        }).then(() => {
+            const newarr = task.map(item => {
+                return item.id !== id ? item : {id, header: item.header, description: item.description, date: item.date, file: item.file, checked: check};
+            });
+            setTask(task => [...newarr]);
         });
 
-        const newarr = task.map(item => {
-            return item.id !== id ? item : {id, header: item.header, description: item.description, date: item.date, file: item.file, checked};
-        });
-        setTask(task => [...newarr]);
+     
         
 
         setLoading(false)
