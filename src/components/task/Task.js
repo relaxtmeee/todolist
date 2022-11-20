@@ -1,6 +1,6 @@
 import './task.scss';
 
-import { doc, deleteDoc } from "firebase/firestore";
+import { doc, deleteDoc, updateDoc } from "firebase/firestore";
 import { db, storage } from '../../services/database';
 import { ref, getDownloadURL, deleteObject} from "firebase/storage";
 
@@ -10,8 +10,8 @@ import { ref, getDownloadURL, deleteObject} from "firebase/storage";
  */
 const Task = (props) => {
 
-    const {header, date, description, file, checked, id} = props.arr;
-    const {task, setTask, setModalShow, setLoading, setId, setCheckbox} = props;
+    const {arr, task, setTask, setModalShow, setLoading, setId, setCheckbox} = props;
+    const {header, date, description, file, checked, id} = arr;
 
     if (file) {
         getDownloadURL(ref(storage, file))
@@ -41,9 +41,7 @@ const Task = (props) => {
             });
         }
 
-        setTask((task) => {
-            return task.filter(item => item.id !== id);
-        })
+        setTask(task => task.filter(item => item.id !== id))
         setLoading(false);
     }
     /**
@@ -52,7 +50,22 @@ const Task = (props) => {
      */
     const redTask = async (event) => {
         setModalShow();
-        setId(event.target.parentElement.parentElement.getAttribute('id'));
+        setId(id);
+    }
+
+    const fileDel = async () => {
+        setLoading(true);
+        const desertRef = ref(storage, file);
+        deleteObject(desertRef);
+        const washingtonRef = doc(db, "tasks", id);
+        await updateDoc(washingtonRef, {
+            file: null
+        }).then(() => {
+            const newarr = task.map(item => item.id !== id ? item : {id, header, description, date, file: null, checked});
+            setTask([...newarr]);
+            setLoading(false);
+            setId(null);
+        })
     }
     /**
      * Стили для просроченных и выполненных тасrов
@@ -67,54 +80,27 @@ const Task = (props) => {
     if (checked) {
         style = {
             'border': '3px solid green',
+            'boxShadow': '0 0 15px green',
             'borderRadius': '10px',
-            'padding': '10px 10px',
-            'boxShadow': '0 0 15px green'
+            'padding': '10px 10px'
         }
     } else if (new Date().getTime() - 86400000 > new Date(date).getTime()) {
         style = {
             'border': '3px solid red',
+            'boxShadow': '0 0 15px red',
             'borderRadius': '10px',
-            'padding': '10px 10px',
-            'boxShadow': '0 0 15px red'
+            'padding': '10px 10px'
         }
     }
     return (
         <>  
-            {/* <div className="separator">
-            
-            </div>
-            <InputGroup id={id} className="mb-3">
-                <InputGroup className="mb-3">
-                    <Form.Label>
-                        <h4>{header}</h4>
-                    </Form.Label>
-                </InputGroup>
-                <InputGroup style={style} className="mb-3">
-                    <InputGroup.Checkbox defaultChecked={checked} onClick={(event) => setCheckbox(event, id, task)} aria-label="Checkbox for following text input" />
-                    <Button variant="secondary">{new Date(date).toLocaleDateString()}</Button>
-                    <Form.Control aria-label="Text input with checkbox" defaultValue={`${description}`}/>
-                    <Button onClick={redTask} variant="secondary">Редактировать</Button>
-                    <Button onClick={delTask} variant="danger">Удалить</Button>
-                </InputGroup>
-                {file ? 
-                    <Form.Group className="mb-3">
-                        <Form.Label>Добавленный файл</Form.Label>
-                            <div>
-                                <a className={id} href="" download>{file}</a>
-                            </div>
-                    </Form.Group> 
-                    : null
-                }
-              
-            </InputGroup> */}
             <article id={id} style={style}>
                 <h2>
                     {header}
                 </h2>
                 <div className="article-content" >
                     <div className="article-check">
-                        <label className="article-checkbox" onClick={(event) => setCheckbox(event, id, task, checked)}>
+                        <label className="article-checkbox" onClick={() => setCheckbox(id, task, checked)}>
                             <input type="checkbox" defaultChecked={checked}/>
                             <div className="article-checkbox__fake">
                             </div>
@@ -141,7 +127,12 @@ const Task = (props) => {
                         <div className="article-file__name">
                             Добавленный файл:
                         </div>
-                        <a className={'article-file__link ' + id} href="" download>{file}</a>
+                        <div className='article-file__link'>
+                            <a href="" download>{file}</a>
+                        </div>
+                        <div className="article-file__delete" onClick={fileDel}>
+                            Удалить файл
+                        </div>
                     </div>
                     : null
                 }

@@ -32,22 +32,29 @@ const ModalWin = (props) => {
                 date: date,
                 file: name,
                 checked: false
-            });
-           
+            })
             if (file) {
                 const storageRef = ref(storage, name);
-                
-                uploadBytes(storageRef, file).then((snapshot) => {
-                    setTask([...props.task, {'id': docRef.id, 'header': header, 'description': description, 'date': date, 'file': name, 'checked': false}]);
-                });
+                uploadBytes(storageRef, file)
+                    .then((snapshot) => {
+                        setTask([...props.task, {'id': docRef.id, 'header': header, 'description': description, 'date': date, 'file': name, 'checked': false}]);
+                        setLoading(false);
+                         setId(null);
+                    })
+                    .catch(e => {
+                        console.log(e);
+                    })
             } else {
                 setTask([...props.task, {'id': docRef.id, 'header': header, 'description': description, 'date': date, 'file': name, 'checked': false}]);
+                setLoading(false);
+                setId(null);    
             }
+            
+
         } catch (e) {
             console.log(e);
         }
-        setLoading(false);
-        setId(null);
+       
     }
     
     /**
@@ -60,37 +67,34 @@ const ModalWin = (props) => {
      * @param {string} taskName Название старого файла, если он был
      */
     const updateTask = async (header, description, date, file, fileName, taskName) => {
+
         setLoading(true);
-        const name = fileName && fileName !== taskName ? fileName : taskName
+
+        const name = (taskName && fileName) || !taskName ? fileName : taskName; 
+
+        if (file && fileName !== taskName) {
+            const storageRef = ref(storage, name);
+            await uploadBytes(storageRef, file);
+        } 
+        if (file && taskName && fileName !== taskName) {
+            const desertRef = ref(storage, taskName);
+            deleteObject(desertRef)
+        }
 
         const washingtonRef = doc(db, "tasks", id);
-
         await updateDoc(washingtonRef, {
             header: header, 
             description: description,
             date: date,
             file: name
-        });
-        if (file) {
-            const storageRef = file ? ref(storage, name) : null;
-            uploadBytes(storageRef, file).then(() => {
-                const newarr = task.map(item => {
-                    return item.id !== id ? item : {id, header, description, date, file: name, checked: item.checked};
-                });
-                setTask(task => [...newarr]);
-            })
-        }
-        if (taskName !== name) {
-            console.log(taskName);
-            const desertRef = ref(storage, taskName);
-
-            deleteObject(desertRef).then(() => {
-                
-            })
-            
-        }
-        setLoading(false);
-        setId(null);
+        }).then(() => {
+            const newarr = task.map(item => {
+                return item.id !== id ? item : {id, header, description, date, file: name, checked: item.checked};
+            });
+            setTask(task => [...newarr]);
+            setLoading(false);
+            setId(null);
+        })
     }
 
     /**
@@ -132,7 +136,7 @@ const ModalWin = (props) => {
                     <Form.Control id='file' type="file" required/>
                 </Form.Group>
                 <Button className="mr-2"onClick={addTask} variant="primary">
-                    Добавить
+                    {arr ? 'Сохранить' : 'Добавить'} 
                 </Button>
                 <Button className="ml-3" onClick={() => {
                     onHide();

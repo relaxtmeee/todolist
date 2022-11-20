@@ -25,7 +25,7 @@ const Tasks = () => {
             querySnapshot.forEach((doc) => {
                 arr.push({id: doc.id,header: doc.data().header, description: doc.data().description, date: doc.data().date, file: doc.data().file, checked: doc.data().checked})
             });
-            setTask(task => arr)
+            setTask([...arr]);
             setLoading(false);
         }
         getData();
@@ -33,11 +33,10 @@ const Tasks = () => {
  
     /**
      * Функция установки состояния checked для выбранного таска
-     * @param {*} event Текущий ивент дял проверки checked
      * @param {*} id id текущего таска для обновления состояния выполнения таска в бд 
      * @param {*} task Массив тасков для обновления состояния
      */
-    const setCheckbox = async (event, id, task, checked) => {
+    const setCheckbox = async (id, task, checked) => {
         setLoading(true)
 
         const check = !checked;
@@ -47,14 +46,9 @@ const Tasks = () => {
         await updateDoc(washingtonRef, {
             checked: check
         }).then(() => {
-            const newarr = task.map(item => {
-                return item.id !== id ? item : {id, header: item.header, description: item.description, date: item.date, file: item.file, checked: check};
-            });
-            setTask(task => [...newarr]);
+            const newarr = task.map(item => item.id !== id ? item : {id, header: item.header, description: item.description, date: item.date, file: item.file, checked: check});
+            setTask([...newarr]);
         });
-
-     
-        
 
         setLoading(false)
     }
