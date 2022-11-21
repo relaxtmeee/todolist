@@ -20,37 +20,38 @@ const ModalWin = (props) => {
      * @param {string} header Заголовок таска
      * @param {string} description Описание таска
      * @param {number} date День создания таска
-     * @param {file} file Прикрепленный файл
-     * @param {string} name Название файла
+     * @param {file} files Прикрепленный файл
+     * @param {string} filesName Название файлов
      */
-    async function sendTaskToDataBase(header, description, date, file, name) {
-        props.setLoading(true)
+    async function sendTaskToDataBase(header, description, date, files, filesName) {
+        setLoading(true)
         try {
             const docRef = await addDoc(collection(db, "tasks"), {
                 header: header,
                 description: description,
                 date: date,
-                file: name,
+                filesName: filesName,
                 checked: false
             })
-            if (file) {
-                const storageRef = ref(storage, name);
-                uploadBytes(storageRef, file)
+            if (files) {
+                for (let i = 0; i < files.length; i++) {
+                    const storageRef = ref(storage, files[i].name);
+                    await uploadBytes(storageRef, files[i])
                     .then((snapshot) => {
-                        setTask([...props.task, {'id': docRef.id, 'header': header, 'description': description, 'date': date, 'file': name, 'checked': false}]);
-                        setLoading(false);
-                         setId(null);
+
                     })
                     .catch(e => {
                         console.log(e);
                     })
+                }
+                setTask([...props.task, {'id': docRef.id, 'header': header, 'description': description, 'date': date, 'filesName': filesName, 'checked': false}]);
+                setLoading(false);
+                setId(null);
             } else {
-                setTask([...props.task, {'id': docRef.id, 'header': header, 'description': description, 'date': date, 'file': name, 'checked': false}]);
+                setTask([...props.task, {'id': docRef.id, 'header': header, 'description': description, 'date': date, 'filesName': filesName, 'checked': false}]);
                 setLoading(false);
                 setId(null);    
             }
-            
-
         } catch (e) {
             console.log(e);
         }
@@ -62,34 +63,19 @@ const ModalWin = (props) => {
      * @param {string} header Заголовок таска
      * @param {string} description Описание таска
      * @param {number} date День создания таска
-     * @param {file} file Прикрепленный файл
-     * @param {string} fileName Название старого файла, если он был
-     * @param {string} taskName Название старого файла, если он был
      */
-    const updateTask = async (header, description, date, file, fileName, taskName) => {
+    const updateTask = async (header, description, date) => {
 
         setLoading(true);
-
-        const name = (taskName && fileName) || !taskName ? fileName : taskName; 
-
-        if (file && fileName !== taskName) {
-            const storageRef = ref(storage, name);
-            await uploadBytes(storageRef, file);
-        } 
-        if (file && taskName && fileName !== taskName) {
-            const desertRef = ref(storage, taskName);
-            deleteObject(desertRef)
-        }
 
         const washingtonRef = doc(db, "tasks", id);
         await updateDoc(washingtonRef, {
             header: header, 
             description: description,
-            date: date,
-            file: name
+            date: date
         }).then(() => {
             const newarr = task.map(item => {
-                return item.id !== id ? item : {id, header, description, date, file: name, checked: item.checked};
+                return item.id !== id ? item : {id, header, description, date, filesName: task[0].filesName, checked: item.checked};
             });
             setTask(task => [...newarr]);
             setLoading(false);
@@ -107,9 +93,16 @@ const ModalWin = (props) => {
         const header = document.getElementById('header').value ? document.getElementById('header').value : 'Заголовок',
               description = document.getElementById('description').value ? document.getElementById('description').value : 'Описание',
               date = document.getElementById('date').value ? new Date(document.getElementById('date').value).getTime() : new Date().getTime(),
-              file = document.getElementById('file').files[0] ? document.getElementById('file').files[0] : null;
+              files = document.getElementById('file') && !bool ? document.getElementById('file').files : null;
 
-        bool ? updateTask(header, description, date, file, file ? file.name : null, arr[0].file ? arr[0].file : null) : sendTaskToDataBase(header, description, date, file, file ? file.name : null);
+        let filesName = []
+        if (files && files.length !== 0) {
+            for (let i = 0; i < files.length; i++) {
+                filesName.push(files[i].name)
+            }
+        }
+
+        bool ? updateTask(header, description, date) : sendTaskToDataBase(header, description, date, files, files ? filesName: null);
         
         onHide();
     }  
@@ -131,20 +124,27 @@ const ModalWin = (props) => {
                     <Form.Label>До какого числа планируете сделать</Form.Label>
                     <Form.Control id='date' type="date" defaultValue={arr ? new Date(arr[0].date).toLocaleDateString('en-ca') : null} required/>
                 </Form.Group>
-                <Form.Group className="mb-3">
-                    <Form.Label>{arr ? 'Выбрать другой файл или оставить прошлый': 'Добавьте файл, если надо'}</Form.Label>
-                    <Form.Control id='file' type="file" required/>
-                </Form.Group>
-                <Button className="mr-2"onClick={addTask} variant="primary">
-                    {arr ? 'Сохранить' : 'Добавить'} 
+                { arr ? null 
+                    : 
+                    <Form.Group className="mb-3">
+                        <Form.Label>
+                            Добавьте файл, если надо
+                        </Form.Label>
+                        <Form.Control id='file' type="file" multiple/>
+                    </Form.Group>
+                }
+                 <Button className="mr-2"onClick={addTask} variant="primary">
+                    {arr ? 'Сохранить' : 'Добавить'}
                 </Button>
                 <Button className="ml-3" onClick={() => {
                     onHide();
                     setId(null);
                     }}
-                variant="danger">
-                    Закрыть
+                    variant="danger"
+                >
+                    {arr ? 'Отменить' : 'Закрыть'}
                 </Button>
+               
             </Form>
         </div>
     )

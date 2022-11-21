@@ -1,8 +1,10 @@
 import './task.scss';
 
+import { Form } from 'react-bootstrap';
 import { doc, deleteDoc, updateDoc } from "firebase/firestore";
 import { db, storage } from '../../services/database';
-import { ref, getDownloadURL, deleteObject} from "firebase/storage";
+import { ref, getDownloadURL, deleteObject, uploadBytes} from "firebase/storage";
+import { useEffect, useState } from 'react';
 
 /**
  * Компонент одного таска
@@ -11,36 +13,23 @@ import { ref, getDownloadURL, deleteObject} from "firebase/storage";
 const Task = (props) => {
 
     const {arr, task, setTask, setModalShow, setLoading, setId, setCheckbox} = props;
-    const {header, date, description, file, checked, id} = arr;
+    const {header, date, description, filesName, checked, id} = arr;
 
-    if (file) {
-        getDownloadURL(ref(storage, file))
-        .then((url) => {
-          const link = document.getElementsByClassName(`${id}`);
-          if (link[0]) link[0].setAttribute('href', url)
-        })
-        .catch((error) => {
-            console.log(error);
-        });
-    }
-    
     /**
      * Функция удаления таска
      */
     const delTask = async () => {
         setLoading(true);
-
         await deleteDoc(doc(db, "tasks", id));
-
-        if (file) {
-            const desertRef = ref(storage, file);
-            deleteObject(desertRef).then(() => {
-
-            }).catch((error) => {
-                console.log(error);
-            });
+        if (filesName) {
+            filesName.map(item => {
+                const desertRef = ref(storage, item);
+                deleteObject(desertRef).then(() => {
+                }).catch((error) => {
+                    console.log(error);
+                });
+            })
         }
-
         setTask(task => task.filter(item => item.id !== id))
         setLoading(false);
     }
@@ -53,20 +42,84 @@ const Task = (props) => {
         setId(id);
     }
 
-    const fileDel = async () => {
+    const fileDel = async (item) => {
         setLoading(true);
-        const desertRef = ref(storage, file);
+        const desertRef = ref(storage, item);
         deleteObject(desertRef);
         const washingtonRef = doc(db, "tasks", id);
         await updateDoc(washingtonRef, {
-            file: null
+            filesName: filesName.filter(file => item != file)
         }).then(() => {
-            const newarr = task.map(item => item.id !== id ? item : {id, header, description, date, file: null, checked});
-            setTask([...newarr]);
+            const newNames = filesName.filter(file => item != file)
+            const newarr = task.map(item => item.id !== id ? item : {id, header, description, date, filesName: newNames, checked});
+            setTask(() => [...newarr]);
             setLoading(false);
             setId(null);
         })
     }
+
+    const addFile = async () => {
+        const files = document.getElementById('add-' + id).files[0] ? document.getElementById('add-' + id).files : null;
+
+        if(files !== null) {
+            setLoading(true);
+            let newNames = [];
+            for (let i = 0; i < files.length; i++) {
+                const newFilesName = filesName.filter(item => item !== files[i].name)
+                if (newFilesName.length == filesName.length) {
+                    const storageRef = ref(storage, files[i].name);
+                    await uploadBytes(storageRef, files[i])
+                    .then((snapshot) => {
+
+                    })
+                    .catch(e => {
+                        console.log(e);
+                    })
+                    newNames.push(files[i].name);
+                }
+            }
+            if (newNames.length > 0) {
+                const washingtonRef = doc(db, "tasks", id);
+                await updateDoc(washingtonRef, {
+                    filesName: [...filesName, ...newNames]
+                }).then(() => {
+                    // const names = [...filesName, ...newNames];
+                    const newarr = task.map(item => {
+                        return item.id !== id ? item : {id, header, description, date, filesName: [...filesName, ...newNames], checked: item.checked};
+                    });
+                    setTask(task => [...newarr]);
+                })
+            }
+            setLoading(false);
+        }
+        
+    }
+
+    const filesBlock = filesName ? filesName.map(item => {
+        getDownloadURL(ref(storage, item))
+        .then((url) => {
+            document.getElementById(id + item).setAttribute('href', url);
+        })
+        .catch((error) => {
+            console.log(error);
+        })
+
+        return (
+            <div className="article-file">
+                <div className="article-file__name">
+                    Добавленный файл:
+                </div>
+                <div className='article-file__link'>
+                    <a id={id + item} href='' download>{item.length > 20 ? item.slice(0, 20) + '...' : item}</a>
+                </div>
+                <div className="article-file__delete" onClick={() => fileDel(item)}>
+                    Удалить файл
+                </div>
+            </div>
+        )
+    }) : null;
+
+  
     /**
      * Стили для просроченных и выполненных тасrов
      */
@@ -122,20 +175,15 @@ const Task = (props) => {
                         </button>
                     </div>
                 </div>
-                {file ? 
-                    <div className="article-file">
-                        <div className="article-file__name">
-                            Добавленный файл:
-                        </div>
-                        <div className='article-file__link'>
-                            <a href="" download>{file}</a>
-                        </div>
-                        <div className="article-file__delete" onClick={fileDel}>
-                            Удалить файл
-                        </div>
-                    </div>
-                    : null
-                }
+                {filesBlock}
+                <div className="article-file__add">
+                    <Form.Control type='file' id={'add-' + id} className="article-file__add-input" multiple/>
+                    <button className="article-file__add-button" onClick={addFile}>
+                        Добавить файл(ы)
+                    </button>
+                </div>
+               
+                
             </article>
         </>
         
