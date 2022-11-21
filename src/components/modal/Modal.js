@@ -3,7 +3,7 @@ import Form from 'react-bootstrap/Form';
 import Button from 'react-bootstrap/Button';
 import { collection, addDoc, updateDoc, doc} from "firebase/firestore"; 
 import { db, storage } from '../../services/database';
-import { ref, uploadBytes, deleteObject } from "firebase/storage";
+import { ref, uploadBytes } from "firebase/storage";
 /**
  *  Компонент модального окна
  */
@@ -35,7 +35,7 @@ const ModalWin = (props) => {
             })
             if (files) {
                 for (let i = 0; i < files.length; i++) {
-                    const storageRef = ref(storage, files[i].name);
+                    const storageRef = ref(storage, date + ' ' + files[i].name);
                     await uploadBytes(storageRef, files[i])
                     .then((snapshot) => {
 
@@ -74,8 +74,10 @@ const ModalWin = (props) => {
             description: description,
             date: date
         }).then(() => {
+            const curentTask = task.filter(item => item.id == id)
+
             const newarr = task.map(item => {
-                return item.id !== id ? item : {id, header, description, date, filesName: task[0].filesName, checked: item.checked};
+                return item.id !== id ? item : {id, header, description, date, filesName: curentTask[0].filesName, checked: item.checked};
             });
             setTask(task => [...newarr]);
             setLoading(false);
@@ -96,13 +98,14 @@ const ModalWin = (props) => {
               files = document.getElementById('file') && !bool ? document.getElementById('file').files : null;
 
         let filesName = []
+
         if (files && files.length !== 0) {
             for (let i = 0; i < files.length; i++) {
-                filesName.push(files[i].name)
+                filesName.push(date + ' ' + files[i].name)
             }
         }
 
-        bool ? updateTask(header, description, date) : sendTaskToDataBase(header, description, date, files, files ? filesName: null);
+        bool ? updateTask(header, description, date) : sendTaskToDataBase(header, description, date, files, filesName);
         
         onHide();
     }  

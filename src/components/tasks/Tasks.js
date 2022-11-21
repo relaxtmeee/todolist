@@ -91,5 +91,9 @@ const Tasks = () => {
     )
 }
 
-
+const countElements = (obj, arrNames) => {
+    arrNames.map(elem => {
+        obj[elem] ? obj[elem] += 1 : obj[elem] = 1
+    })
+}
 export default Tasks;

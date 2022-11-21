@@ -4,7 +4,7 @@ import { Form } from 'react-bootstrap';
 import { doc, deleteDoc, updateDoc } from "firebase/firestore";
 import { db, storage } from '../../services/database';
 import { ref, getDownloadURL, deleteObject, uploadBytes} from "firebase/storage";
-import { useEffect, useState } from 'react';
+
 
 /**
  * Компонент одного таска
@@ -65,9 +65,10 @@ const Task = (props) => {
             setLoading(true);
             let newNames = [];
             for (let i = 0; i < files.length; i++) {
-                const newFilesName = filesName.filter(item => item !== files[i].name)
+                const newFilesName = filesName.filter(item => item !== files[i].name);
+
                 if (newFilesName.length == filesName.length) {
-                    const storageRef = ref(storage, files[i].name);
+                    const storageRef = ref(storage, date + ' ' + files[i].name);
                     await uploadBytes(storageRef, files[i])
                     .then((snapshot) => {
 
@@ -103,14 +104,14 @@ const Task = (props) => {
         .catch((error) => {
             console.log(error);
         })
-
+        const fileName = item.replace(/(\d+\s)/, '')
         return (
             <div className="article-file">
                 <div className="article-file__name">
                     Добавленный файл:
                 </div>
                 <div className='article-file__link'>
-                    <a id={id + item} href='' download>{item.length > 20 ? item.slice(0, 20) + '...' : item}</a>
+                    <a id={id + item} href='' download>{fileName.length > 20 ? fileName.slice(0, 20) + '...' : fileName}</a>
                 </div>
                 <div className="article-file__delete" onClick={() => fileDel(item)}>
                     Удалить файл
