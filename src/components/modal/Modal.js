@@ -45,11 +45,11 @@ const ModalWin = (props) => {
                         console.log(e);
                     })
                 }
-                setTask([...props.task, {'id': docRef.id, 'header': header, 'description': description, 'date': date, 'filesName': filesName, 'checked': false}]);
+                setTask([...props.task, {'id': docRef.id, 'header': header, 'description': description, 'date': date, 'dateId': date, 'filesName': filesName, 'checked': false}]);
                 setLoading(false);
                 setId(null);
             } else {
-                setTask([...props.task, {'id': docRef.id, 'header': header, 'description': description, 'date': date, 'filesName': filesName, 'checked': false}]);
+                setTask([...props.task, {'id': docRef.id, 'header': header, 'description': description, 'date': date, 'dateId': date, 'filesName': filesName, 'checked': false}]);
                 setLoading(false);
                 setId(null);    
             }
