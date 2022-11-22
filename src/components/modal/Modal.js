@@ -30,6 +30,7 @@ const ModalWin = (props) => {
                 header: header,
                 description: description,
                 date: date,
+                dateId: date,
                 filesName: filesName,
                 checked: false
             })
@@ -77,7 +78,7 @@ const ModalWin = (props) => {
             const curentTask = task.filter(item => item.id == id)
 
             const newarr = task.map(item => {
-                return item.id !== id ? item : {id, header, description, date, filesName: curentTask[0].filesName, checked: item.checked};
+                return item.id !== id ? item : {id, header, description, date, dateId: curentTask[0].dateId, filesName: curentTask[0].filesName, checked: item.checked};
             });
             setTask(task => [...newarr]);
             setLoading(false);

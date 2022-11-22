@@ -23,7 +23,7 @@ const Tasks = () => {
             const querySnapshot = await getDocs(collection(db, "tasks"));
             let arr = [];
             querySnapshot.forEach((doc) => {
-                arr.push({id: doc.id,header: doc.data().header, description: doc.data().description, date: doc.data().date, filesName: doc.data().filesName, checked: doc.data().checked})
+                arr.push({id: doc.id,header: doc.data().header, description: doc.data().description, date: doc.data().date, dateId: doc.data().date,filesName: doc.data().filesName, checked: doc.data().checked})
             });
             setTask([...arr]);
             setLoading(false);
@@ -46,7 +46,7 @@ const Tasks = () => {
         await updateDoc(washingtonRef, {
             checked: check
         }).then(() => {
-            const newarr = task.map(item => item.id !== id ? item : {id, header: item.header, description: item.description, date: item.date, filesName: item.filesName, checked: check});
+            const newarr = task.map(item => item.id !== id ? item : {id, header: item.header, description: item.description, date: item.date, dateId: item.dateId, filesName: item.filesName, checked: check});
             setTask([...newarr]);
         });
 
@@ -91,9 +91,5 @@ const Tasks = () => {
     )
 }
 
-const countElements = (obj, arrNames) => {
-    arrNames.map(elem => {
-        obj[elem] ? obj[elem] += 1 : obj[elem] = 1
-    })
-}
+
 export default Tasks;

@@ -13,7 +13,7 @@ import { ref, getDownloadURL, deleteObject, uploadBytes} from "firebase/storage"
 const Task = (props) => {
 
     const {arr, task, setTask, setModalShow, setLoading, setId, setCheckbox} = props;
-    const {header, date, description, filesName, checked, id} = arr;
+    const {header, date, dateId, description, filesName, checked, id} = arr;
 
     /**
      * Функция удаления таска
@@ -51,7 +51,7 @@ const Task = (props) => {
             filesName: filesName.filter(file => item != file)
         }).then(() => {
             const newNames = filesName.filter(file => item != file)
-            const newarr = task.map(item => item.id !== id ? item : {id, header, description, date, filesName: newNames, checked});
+            const newarr = task.map(item => item.id !== id ? item : {id, header, description, date, dateId, filesName: newNames, checked});
             setTask(() => [...newarr]);
             setLoading(false);
             setId(null);
@@ -60,7 +60,6 @@ const Task = (props) => {
 
     const addFile = async () => {
         const files = document.getElementById('add-' + id).files[0] ? document.getElementById('add-' + id).files : null;
-
         if(files !== null) {
             setLoading(true);
             let newNames = [];
@@ -68,7 +67,7 @@ const Task = (props) => {
                 const newFilesName = filesName.filter(item => item !== files[i].name);
 
                 if (newFilesName.length == filesName.length) {
-                    const storageRef = ref(storage, date + ' ' + files[i].name);
+                    const storageRef = ref(storage, dateId + ' ' + files[i].name);
                     await uploadBytes(storageRef, files[i])
                     .then((snapshot) => {
 
@@ -76,7 +75,7 @@ const Task = (props) => {
                     .catch(e => {
                         console.log(e);
                     })
-                    newNames.push(files[i].name);
+                    newNames.push(dateId + ' ' + files[i].name);
                 }
             }
             if (newNames.length > 0) {
@@ -86,7 +85,7 @@ const Task = (props) => {
                 }).then(() => {
                     // const names = [...filesName, ...newNames];
                     const newarr = task.map(item => {
-                        return item.id !== id ? item : {id, header, description, date, filesName: [...filesName, ...newNames], checked: item.checked};
+                        return item.id !== id ? item : {id, header, description, date, dateId, filesName: [...filesName, ...newNames], checked: item.checked};
                     });
                     setTask(task => [...newarr]);
                 })
